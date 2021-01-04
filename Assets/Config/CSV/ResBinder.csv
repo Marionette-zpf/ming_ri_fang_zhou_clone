@@ -1,0 +1,5 @@
+绑定键值,绑定路径
+string,string
+Key,Url
+BaseStoryCharCom,prefab_ui_story_StoryCharCom
+StoryPanel,prefab_ui_story_StoryPanel

@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Story
+  m_EditorClassIdentifier: 
+  m_GroupName: Story
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 7e87bbd3071d62b449e3b220dc693390
+  m_SerializeEntries:
+  - m_GUID: 4aed01db8611b56418b0514a6ea0ae92
+    m_Address: prefab_ui_story_StoryCharCom
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 6450214372168481628, guid: 4aed01db8611b56418b0514a6ea0ae92,
+      type: 3}
+    m_TargetAsset: {fileID: 6450214372168481628, guid: 4aed01db8611b56418b0514a6ea0ae92,
+      type: 3}
+  - m_GUID: b3eb761c75d59294f978993e33ead846
+    m_Address: prefab_ui_story_StoryPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 4981518152749618263, guid: b3eb761c75d59294f978993e33ead846,
+      type: 3}
+    m_TargetAsset: {fileID: 4981518152749618263, guid: b3eb761c75d59294f978993e33ead846,
+      type: 3}
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 5bed48479c10946439b8ce0e489a26da, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 5a7dea4406fb0b74c8d38eff0dc903bf, type: 2}
+    - {fileID: 11400000, guid: 11adba00d8569364bbfb7729c8f3d4aa, type: 2}
