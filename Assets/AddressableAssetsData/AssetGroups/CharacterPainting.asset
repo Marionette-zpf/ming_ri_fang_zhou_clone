@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: CharacterPainting
+  m_EditorClassIdentifier: 
+  m_GroupName: CharacterPainting
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 85aade70822b7554a8014c4c80122a99
+  m_SerializeEntries:
+  - m_GUID: aad106b30cd5e9c4bb66a66b0e36ac06
+    m_Address: avg_char_002
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 2800000, guid: aad106b30cd5e9c4bb66a66b0e36ac06, type: 3}
+    m_TargetAsset: {fileID: 2800000, guid: aad106b30cd5e9c4bb66a66b0e36ac06, type: 3}
+  - m_GUID: df8e2ba8180dc0a4f9f21d0ce212328e
+    m_Address: avg_char_001
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 2800000, guid: df8e2ba8180dc0a4f9f21d0ce212328e, type: 3}
+    m_TargetAsset: {fileID: 2800000, guid: df8e2ba8180dc0a4f9f21d0ce212328e, type: 3}
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 5bed48479c10946439b8ce0e489a26da, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: d20441d3082149042a53f78aabed268b, type: 2}
+    - {fileID: 11400000, guid: 7add22da0efddfa42845499484881485, type: 2}

@@ -120,17 +120,34 @@ public class StoryEditor : EditorWindow
                             }
                         }
 
-                        if (GUILayout.Button("Add Painting"))
+                        HorizontalCall(() =>
                         {
-                            if (dialogCfg.CharacterPainting == null || dialogCfg.GreyPainting == null)
+                            if (GUILayout.Button("Add Painting"))
                             {
-                                dialogCfg.CharacterPainting = new List<string>();
-                                dialogCfg.GreyPainting = new List<bool>();
+                                if (dialogCfg.CharacterPainting == null || dialogCfg.GreyPainting == null)
+                                {
+                                    dialogCfg.CharacterPainting = new List<string>();
+                                    dialogCfg.GreyPainting = new List<bool>();
+                                }
+
+                                dialogCfg.CharacterPainting.Add(string.Empty);
+                                dialogCfg.GreyPainting.Add(false);
                             }
 
-                            dialogCfg.CharacterPainting.Add(string.Empty);
-                            dialogCfg.GreyPainting.Add(false);
-                        }
+                            if (dialogCfg.CharacterPainting != null && dialogCfg.GreyPainting != null && GUILayout.Button("Del Painting"))
+                            {
+                                dialogCfg.CharacterPainting.RemoveAt(dialogCfg.CharacterPainting.Count - 1);
+                                dialogCfg.GreyPainting.RemoveAt(dialogCfg.GreyPainting.Count - 1);
+
+                                if(dialogCfg.CharacterPainting.Count == 0 || dialogCfg.GreyPainting.Count == 0)
+                                {
+                                    dialogCfg.CharacterPainting = null;
+                                    dialogCfg.GreyPainting = null;
+                                }
+                            }
+                        });
+
+
 
                         if (GUILayout.Button("Add Event"))
                         {

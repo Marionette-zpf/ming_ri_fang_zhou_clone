@@ -1,9 +1,12 @@
-﻿using DG.Tweening;
+﻿using Config;
+using DG.Tweening;
 using EasyUI.Ext;
 using EasyWork.Utilities;
 using Extend.System;
 using Helper;
 using Manager;
+using Manager.Res;
+using Module.Story.Cache;
 using Scripts.UIBase.Story;
 using System;
 using System.Collections;
@@ -21,7 +24,7 @@ namespace Module.Story.View
     /// </summary>
     public class StoryPanel : BaseStoryPanel
     {
-        private StoryInfo m_storyInfo;
+        private DialogFragment m_dialogFragent;
         private Queue<CharIconData> m_iconDataQueue = new Queue<CharIconData>();
 
         private Tween m_dialogTween;
@@ -31,29 +34,24 @@ namespace Module.Story.View
 
         protected override void OnEnter(params object[] param)
         {
-            m_storyInfo = param.Get<StoryInfo>();
-            if (m_storyInfo == null)
+            m_dialogFragent = param.Get<DialogFragment>();
+            if (m_dialogFragent == null)
             {
                 return;
             }
 
-            ECoroutine.StartCoroutine(StartDialog(m_storyInfo));
+            ECoroutine.StartCoroutine(StartDialog(m_dialogFragent));
         }
 
-        private IEnumerator StartDialog(StoryInfo m_storyInfo)
+        private IEnumerator StartDialog(DialogFragment m_storyInfo)
         {
-            for (int i = 0; i < m_storyInfo.DialogInfos.Count; i++)
+            for (int i = 0; i < m_storyInfo.DialogConfigs.Count; i++)
             {
                 m_nextDialog = false;
 
-                var dialog = m_storyInfo.DialogInfos[i];
+                var dialogCfg = m_storyInfo.DialogConfigs[i];
 
-                SetDialog(dialog);
-
-                if(dialog.Options != null)
-                {
-                    SetOption(dialog.Options);
-                }
+                SetDialog(dialogCfg);
 
                 while (!m_nextDialog)
                 {
@@ -91,14 +89,10 @@ namespace Module.Story.View
             }
         }
 
-        private GameObject ItemFactory()
-        {
-            return null;
-        }
-
         private void ItemRender(int index, BaseStoryCharCom com, CharInfo data)
         {
-            com.image_char.SetIcon(data.IconUrl);
+            AddressableOpCache.Get(com.image_char)
+                              .Set(loader => com.image_char.sprite = loader.Get<Sprite>(), data.IconUrl);
             com.image_char.color = data.Gray ? Color.gray : Color.white;
         }
 
@@ -123,33 +117,28 @@ namespace Module.Story.View
             };
         }
 
-        private List<CharInfo> m_charInfos = new List<CharInfo>();
-        private void SetDialog(DialogInfo dialogInfo)
+        private List<CharInfo> m_charInfos = new List<CharInfo>(); 
+
+        private void SetDialog(DialogConfig dialogInfo)
         {
             m_charInfos.Clear();
-            var data = dialogInfo.CharIconInfo.Split(StrHelper.SPLIT_CHAR_1);
-
-            for (int i = 0; i < data.Length; i++)
+            if(dialogInfo.CharacterPainting != null && dialogInfo.CharacterPainting.Count > 0)
             {
-                var temp = new CharInfo();
-                var charInfoData = data[i].Split(StrHelper.SPLIT_CHAR_2);
-                temp.Gray = charInfoData[1] == "0";
-                temp.IconUrl = charInfoData[0];
-                m_charInfos.Add(temp);
+                for (int i = 0; i < dialogInfo.CharacterPainting.Count; i++)
+                {
+                    m_charInfos.Add(new CharInfo() { IconUrl = dialogInfo.CharacterPainting[i], Gray = dialogInfo.GreyPainting[i] });
+                }
             }
 
             Switch(m_charInfos);
 
-            text_char.text = dialogInfo.Character;
+            var characterCfg = CharacterDao.Inst.GetCfg(dialogInfo.CharacterId);
+
+            text_char.text = characterCfg.Name;
             text_dialog.text = string.Empty;
 
             m_dialogTween?.Kill();
-            m_dialogTween = text_dialog.DOText(dialogInfo.Context, dialogInfo.Context.Length * 0.05f).SetEase(Ease.Linear).SetAutoKill(false);
-        }
-
-        private void SetOption(List<OptionInfo> options)
-        {
-            SetDialog(options[0].NextDialog);
+            m_dialogTween = text_dialog.DOText(dialogInfo.Dialog, dialogInfo.Dialog.Length * 0.05f).SetEase(Ease.Linear).SetAutoKill(false);
         }
     }
 
@@ -166,10 +155,45 @@ namespace Module.Story.View
     }
 }
 
-public static class ImageExt
+public static class AddressableOpCache
 {
-    public static void SetIcon(this Image @this, string url)
-    {
+    private static Dictionary<object, AddressableOp> g_cacheMap = new Dictionary<object, AddressableOp>();
 
+    public static AddressableOp Get(object key)
+    {
+        if (!g_cacheMap.TryGetValue(key, out AddressableOp addressableOp))
+        {
+            addressableOp = new AddressableOp();
+            g_cacheMap.Add(key, addressableOp);
+        }
+
+        return addressableOp;
+    }
+}
+
+public class AddressableOp
+{
+    private Loader m_loader;
+
+    private Loader.LoadedHandle m_loadedHandlel;
+
+    public void Set(Loader.LoadedHandle loadedHandle, string url)
+    {
+        if (m_loader != null && m_loader.State == Loader.LoaderState.Loading)
+        {
+            m_loader.LoadedHandleAction -= m_loadedHandlel;
+        }
+
+        m_loader = ResManager.LoadAssetAsync(url);
+
+        if (m_loader.State == Loader.LoaderState.Finish)
+        {
+            loadedHandle?.Invoke(m_loader);
+        }
+        else
+        {
+            m_loadedHandlel = loadedHandle;
+            m_loader.LoadedHandleAction += m_loadedHandlel;
+        }
     }
 }

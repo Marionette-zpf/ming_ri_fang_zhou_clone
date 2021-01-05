@@ -21,7 +21,9 @@ namespace Manager
                 return;
             }
 
-            g_commandMap.Add(commandTypeStr, command);
+            var index = commandTypeStr.LastIndexOf('.') + 1;
+
+            g_commandMap.Add(commandTypeStr.Substring(index), command);
         }
 
         public static void ExcuteCommand(string commandName, params object[] param)

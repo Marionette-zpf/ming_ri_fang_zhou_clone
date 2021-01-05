@@ -40,6 +40,11 @@ namespace Helper
                 }
             }
 
+            ToString(tempCache, sb);
+
+            result.Add(new ExcelRowInfo() { Row = row++, Contexts = tempCache.ToArray() });
+            tempCache.Clear();
+
             return result;
         }
 

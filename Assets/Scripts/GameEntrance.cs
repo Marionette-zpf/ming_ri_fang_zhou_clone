@@ -14,8 +14,6 @@ public class GameEntrance : MonoBehaviour
 
     private void Awake()
     {
-        Debug.LogError(JsonMapper.ToJson(new DialogFragment()));
-
         button.onClick.AddListener(() =>
         {
             ESceneManager.LoadSceneAsync("Story");

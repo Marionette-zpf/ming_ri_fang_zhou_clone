@@ -15,6 +15,7 @@ namespace EasyWork.Utilities
                 var go = new GameObject();
                 go.hideFlags = HideFlags.HideInHierarchy;
                 m_corourineMono = go.AddComponent<ECoroutineCom>();
+                Object.DontDestroyOnLoad(go);
             }
             return m_corourineMono.StartCoroutine(enumerator);
         }

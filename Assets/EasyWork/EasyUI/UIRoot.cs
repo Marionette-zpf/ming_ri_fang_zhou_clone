@@ -33,6 +33,7 @@ namespace EasyUI
                 uIHierarchy.RectTransform.anchorMax = Vector2.one;
                 uIHierarchy.RectTransform.sizeDelta = Vector2.zero;
                 uIHierarchy.RectTransform.anchoredPosition = Vector2.zero;
+                uIHierarchy.RectTransform.localScale = Vector3.one;
                 m_uiIHierarchyMap.Add(i, uIHierarchy);
             }
         }

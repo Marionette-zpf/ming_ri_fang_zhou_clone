@@ -60,7 +60,7 @@ namespace EasyUI.Ext
                     var offset = m_data.Count - m_coms.Count;
                     for (int i = 0; i < offset; i++)
                     {
-                        var cfg = ResBinderDao.Inst.GetCfg(typeof(TCom).ToString());
+                        var cfg = ResBinderDao.Inst.GetCfg(typeof(TCom).Name.ToString());
                         var tempCom = GameObject.Instantiate(ResManager.LoadAsset<GameObject>(cfg.Url)).GetComponent<TCom>();
                         if (tempCom == null)
                         {

@@ -10,5 +10,7 @@
         public const string SCENE_STORY = "Story";
 
         public const string PLAYER_PREFS_GAME_PROCESS = "GameProcess";
+
+        public const string DATA_DIALOG_PLOT = "DialogPlot";
     }
 }
