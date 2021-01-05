@@ -120,9 +120,56 @@ namespace Module
 
     public abstract partial class BaseModule
     {
+        public DataInterface DataInterfacee { get; } = new DataInterface();
+
         private Dictionary<string, DataBinder> m_binderMap = new Dictionary<string, DataBinder>();
 
         public void GetData<T>(string key, out T data)
+        {
+            DataInterfacee.Get(key, out data);
+        }
+
+        protected void Register<T>(string key, Func<T> dataProvider, bool goal = false)
+        {
+            DataInterfacee.Register(key, dataProvider, goal);
+        }
+    }
+
+    public interface IModuleBinder<T> where T : BaseModule
+    {
+       
+    }
+
+    public static class IModuleBinderExt
+    {
+        public static T Module<T>(this IModuleBinder<T> @this) where T : BaseModule
+        {
+            return ModuleManager.GetModule<T>();
+        }
+
+        public static void GetData<T, TData>(this IModuleBinder<T> @this, string key, out TData data) where T : BaseModule
+        {
+            ModuleManager.GetModule<T>().GetData(key, out data);
+        }
+    }
+
+    public class DataInterface
+    {
+        private Dictionary<string, DataBinder> m_binderMap = new Dictionary<string, DataBinder>();
+
+        public T Get<T>(string key)
+        {
+            if (m_binderMap.TryGetValue(key, out var dataBinder))
+            {
+                return (dataBinder as DataBinder<T>).Get();
+            }
+            else
+            {
+                return default;
+            }
+        }
+
+        public void Get<T>(string key, out T data)
         {
             if (m_binderMap.TryGetValue(key, out var dataBinder))
             {
@@ -134,7 +181,7 @@ namespace Module
             }
         }
 
-        protected void Register<T>(string key, Func<T> dataProvider, bool goal = false)
+        public void Register<T>(string key, Func<T> dataProvider, bool goal = false)
         {
             if (m_binderMap.ContainsKey(key))
             {
@@ -150,23 +197,6 @@ namespace Module
 
             m_binderMap.Add(key, dataBinder);
         }
-    }
 
-    public interface IModuleBinder<T> where T : BaseModule
-    {
-
-    }
-
-    public static class IModuleBinderExt
-    {
-        public static T Module<T>(this IModuleBinder<T> @this) where T : BaseModule
-        {
-            return ModuleManager.GetModule<T>();
-        }
-
-        public static void GetData<T, TData>(this IModuleBinder<T> @this, string key, out TData data) where T : BaseModule
-        {
-            ModuleManager.GetModule<T>().GetData(key, out data);
-        }
     }
 }

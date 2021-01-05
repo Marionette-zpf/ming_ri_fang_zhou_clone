@@ -3,17 +3,12 @@ using DG.Tweening;
 using EasyUI.Ext;
 using EasyWork.Utilities;
 using Extend.System;
-using Helper;
-using Manager;
 using Manager.Res;
 using Module.Story.Cache;
 using Scripts.UIBase.Story;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using Utilities.Common;
 
 namespace Module.Story.View
 {
