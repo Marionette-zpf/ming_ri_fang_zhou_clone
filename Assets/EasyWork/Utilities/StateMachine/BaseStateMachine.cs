@@ -11,6 +11,8 @@ namespace EasyWork.Utilities
     /// </summary>
     public class BaseStateMachine<T>
     {
+        public T CurrentState => m_curStateRunner.State;
+
         private Dictionary<T, BaseStateRunner<T>> m_stateMap = new Dictionary<T, BaseStateRunner<T>>();
 
         private IComparable<T> comparable;
@@ -19,7 +21,7 @@ namespace EasyWork.Utilities
 
         private T m_primaryState;
 
-        public BaseStateMachine<T> AddState(T state, BaseStateRunner<T> stateRunner)
+        public virtual BaseStateMachine<T> AddState(T state, BaseStateRunner<T> stateRunner)
         {
             if (m_stateMap.ContainsKey(state))
             {
@@ -30,7 +32,7 @@ namespace EasyWork.Utilities
             return this;
         }
 
-        public void SetPrimaryState(T primaryState)
+        public virtual void SetPrimaryState(T primaryState)
         {
             if(!m_stateMap.TryGetValue(primaryState, out var stateRunner))
             {
@@ -44,7 +46,7 @@ namespace EasyWork.Utilities
             m_curStateRunner.EnterState();
         }
 
-        public void EnterState(T state)
+        public virtual void EnterState(T state)
         {
             if (m_stateMap.TryGetValue(state, out var stateRunner) && stateRunner == m_curStateRunner)
             {
@@ -55,7 +57,7 @@ namespace EasyWork.Utilities
             m_curStateRunner.EnterState();
         }
 
-        public void UpdateStateMachine()
+        public virtual void UpdateStateMachine()
         {
             m_curStateRunner.UpdateState();
         }

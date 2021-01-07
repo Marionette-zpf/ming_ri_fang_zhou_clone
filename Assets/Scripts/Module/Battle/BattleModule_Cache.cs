@@ -7,7 +7,7 @@ namespace Module.Battle
     /// Name    A12771\Administrator
     /// Desc    desc
     /// </summary>
-    public partial class BattleModule : MonoBehaviour
+    public partial class BattleModule
     {
         
     }

@@ -14,16 +14,14 @@ namespace Manager
 
         public static void RegisterCommand(BaseCommand command)
         {
-            var commandTypeStr = command.GetType().ToString();
+            var commandTypeStr = command.GetType().Name;
             if (g_commandMap.ContainsKey(commandTypeStr))
             {
                 Debug.LogError($"command:{commandTypeStr} has registered");
                 return;
             }
 
-            var index = commandTypeStr.LastIndexOf('.') + 1;
-
-            g_commandMap.Add(commandTypeStr.Substring(index), command);
+            g_commandMap.Add(commandTypeStr, command);
         }
 
         public static void ExcuteCommand(string commandName, params object[] param)

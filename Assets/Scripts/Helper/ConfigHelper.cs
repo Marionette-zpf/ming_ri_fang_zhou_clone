@@ -1,21 +1,12 @@
-﻿using System.Collections.Generic;
-
-namespace Helper
+﻿namespace Helper
 {
     /// <summary>
-    /// Date    2020/12/24 21:46:06
-    /// Name    DESKTOP-H2JU0TM\icon
+    /// Date    2021/1/6 12:05:23
+    /// Name    A12771\Administrator
     /// Desc    desc
     /// </summary>
     public class ConfigHelper
     {
 
-    }
-
-    class Config<T>
-    {
-        protected Dictionary<uint, T> m_data = new Dictionary<uint, T>();
-
-        
     }
 }
