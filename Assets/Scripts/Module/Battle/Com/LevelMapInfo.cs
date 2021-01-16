@@ -10,36 +10,49 @@ namespace Module.Battle.Com
     /// </summary>
     public class LevelMapInfo
     {
+        public const float TILE_SIZE = 1;
+
         public Tile[][] MapTiles;
 
-        public EnemyPath[] EnemyPathArray;
-
-        [HideInInspector]
-        public Tile[] LoadTiles;
-        [HideInInspector]
-        public Tile[] PlaceTiles;
+        public UnitPath[] EnemyPathArray;
 
         public Tile GetTile(Vector2Int point)
         {
             return MapTiles[point.y][point.x];
         }
+    }
 
-        public void Classify()
+    public class LevelMapInfoExt
+    {
+        public Tile[] LoadTiles;
+        public Tile[] PlaceTiles;
+
+        public LevelMapInfo MapInfo { get; private set; }
+
+        public LevelMapInfoExt(LevelMapInfo mapInfo)
+        {
+            MapInfo = mapInfo;
+            Classify();
+        }
+
+
+
+        private void Classify()
         {
             var loadTiles = new List<Tile>();
             var placeTiles = new List<Tile>();
 
-            for (int i = 0; i < MapTiles.GetLength(0); i++)
+            for (int i = 0; i < MapInfo.MapTiles.GetLength(0); i++)
             {
-                for (int j = 0; j < MapTiles.GetLength(1); j++)
+                for (int j = 0; j < MapInfo.MapTiles.GetLength(1); j++)
                 {
-                    switch (MapTiles[i][j].Type)
+                    switch (MapInfo.MapTiles[i][j].Type)
                     {
                         case TileTypeEnum.LOAD:
-                            loadTiles.Add(MapTiles[i][j]);
+                            loadTiles.Add(MapInfo.MapTiles[i][j]);
                             break;
                         case TileTypeEnum.PLACE:
-                            placeTiles.Add(MapTiles[i][j]);
+                            placeTiles.Add(MapInfo.MapTiles[i][j]);
                             break;
                         case TileTypeEnum.OBSTACLE:
                             break;
@@ -54,7 +67,113 @@ namespace Module.Battle.Com
         }
     }
 
-    public class EnemyPath
+    public class UnitPathExt 
+    {
+        public Tile[] Tiles;
+        public UnitDir[] DirLink;
+
+        private float m_interval;
+        private float m_length;
+
+        public UnitPathExt(UnitPath unitPath, LevelMapInfo levelMapInfo)
+        {
+            var pointLength = unitPath.Points.Length;
+
+            Tiles = new Tile[pointLength];
+            DirLink = new UnitDir[pointLength];
+
+            for (int i = 0; i < pointLength; i++)
+            {
+                Tiles[i] = levelMapInfo.GetTile(unitPath.Points[i]);
+
+                if(i != pointLength - 1)
+                {
+                    var point = unitPath.Points[i];
+                    var nextPoint = unitPath.Points[i + 1];
+
+                    if(nextPoint.x > point.x)
+                    {
+                        DirLink[i] = UnitDir.EAST;
+                    }else if(nextPoint.x < point.x)
+                    {
+                        DirLink[i] = UnitDir.WEST;
+                    }else if (nextPoint.y > point.y)
+                    {
+                        DirLink[i] = UnitDir.NORTH;
+                    }else if(nextPoint.y < point.y)
+                    {
+                        DirLink[i] = UnitDir.SOUTH;
+                    }
+                }
+                else
+                {
+                    DirLink[i] = DirLink[i - 1];
+                }
+            }
+        }
+
+        public Vector2Int GetPointByJourney(float journey)
+        {
+            if (journey >= Length())
+            {
+                return Tiles[DirLink.Length - 1].Point;
+            }
+
+            int curIndex = (int)(journey / LevelMapInfo.TILE_SIZE);
+
+            return Tiles[curIndex].Point;
+        }
+
+        public UnitDir GetDirByJourney(float journey)
+        {
+            if (journey >= Length())
+            {
+                return DirLink[DirLink.Length - 1];
+            }
+
+            int curIndex = (int)(journey / LevelMapInfo.TILE_SIZE);
+
+            return DirLink[curIndex];
+        }
+
+        public Vector3 GetWSPosByJourney(float journey)
+        {
+            if (journey >= Length())
+            {
+                return Tiles[Tiles.Length - 1].CenterWorldPos;
+            }
+
+            int curIndex = (int)(journey / LevelMapInfo.TILE_SIZE);
+
+            return Vector3.Lerp(Tiles[curIndex].CenterWorldPos, Tiles[curIndex + 1].CenterWorldPos, journey % LevelMapInfo.TILE_SIZE / LevelMapInfo.TILE_SIZE);
+        }
+
+        public float Length()
+        {
+            if (m_length != 0)
+            {
+                return m_length;
+            }
+
+            m_length = Tiles.Length * LevelMapInfo.TILE_SIZE;
+
+            return m_length;
+        }
+
+        public float Interval()
+        {
+            if (m_interval != 0)
+            {
+                return m_interval;
+            }
+
+            m_interval = 1 / Tiles.Length;
+
+            return m_interval;
+        }
+    }
+
+    public class UnitPath
     {
         public Vector2Int[] Points;
     }
@@ -64,7 +183,7 @@ namespace Module.Battle.Com
         public TileTypeEnum Type;
         public Vector2Int Point;
         [HideInInspector]
-        public Vector3 WorldPos;
+        public Vector3 CenterWorldPos;
     }
 
 
@@ -74,5 +193,7 @@ namespace Module.Battle.Com
         PLACE,
         OBSTACLE
     }
+
+
 }
 

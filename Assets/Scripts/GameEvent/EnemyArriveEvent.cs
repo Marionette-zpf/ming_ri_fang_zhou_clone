@@ -1,4 +1,5 @@
 ﻿using Module.Battle.Com;
+using UnityEngine;
 
 namespace GameEvent
 {
@@ -10,5 +11,12 @@ namespace GameEvent
     public struct EnemyArriveEvent
     {
         public BaseEnemyUnit EnemyUnit;
+    }
+
+    public struct UnitMoveEvent
+    {
+        public Vector2Int PrePoint;
+        public Vector2Int CurrentPoint;
+        public BaseUnit Unit;
     }
 }

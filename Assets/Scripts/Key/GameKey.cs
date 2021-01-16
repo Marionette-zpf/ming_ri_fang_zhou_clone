@@ -12,5 +12,6 @@
         public const string PLAYER_PREFS_GAME_PROCESS = "GameProcess";
 
         public const string DATA_DIALOG_PLOT = "DialogPlot";
+        public const string DATA_LEVEL_MAP = "LevelMapInfo";
     }
 }
