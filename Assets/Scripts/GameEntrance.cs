@@ -5,18 +5,24 @@ using Module.Story.Cache;
 using System;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameEntrance : MonoBehaviour
 {
     public Button button;
-
+    public Button Game;
 
     private void Awake()
     {
         button.onClick.AddListener(() =>
         {
             ESceneManager.LoadSceneAsync("Story");
+        });
+
+        Game.onClick.AddListener(() =>
+        {
+            SceneManager.LoadScene("Game");
         });
 
         InitializeCommand();

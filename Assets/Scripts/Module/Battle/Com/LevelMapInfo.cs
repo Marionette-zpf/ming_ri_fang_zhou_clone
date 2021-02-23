@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Module.Battle.Com
@@ -8,17 +9,21 @@ namespace Module.Battle.Com
     /// Name    A12771\Administrator
     /// Desc    desc
     /// </summary>
-    public class LevelMapInfo
+    [CreateAssetMenu( menuName = "MapData")]
+    public class LevelMapInfo : ScriptableObject
     {
         public const float TILE_SIZE = 1;
 
-        public Tile[][] MapTiles;
+        public int Wdith;
+        public int Height;
+
+        public Tile[] MapTiles;
 
         public UnitPath[] EnemyPathArray;
 
         public Tile GetTile(Vector2Int point)
         {
-            return MapTiles[point.y][point.x];
+            return MapTiles[Wdith * point.x + point.y];
         }
     }
 
@@ -42,23 +47,20 @@ namespace Module.Battle.Com
             var loadTiles = new List<Tile>();
             var placeTiles = new List<Tile>();
 
-            for (int i = 0; i < MapInfo.MapTiles.GetLength(0); i++)
+            for (int i = 0; i < MapInfo.MapTiles.Length; i++)
             {
-                for (int j = 0; j < MapInfo.MapTiles.GetLength(1); j++)
+                switch (MapInfo.MapTiles[i].Type)
                 {
-                    switch (MapInfo.MapTiles[i][j].Type)
-                    {
-                        case TileTypeEnum.LOAD:
-                            loadTiles.Add(MapInfo.MapTiles[i][j]);
-                            break;
-                        case TileTypeEnum.PLACE:
-                            placeTiles.Add(MapInfo.MapTiles[i][j]);
-                            break;
-                        case TileTypeEnum.OBSTACLE:
-                            break;
-                        default:
-                            break;
-                    }
+                    case TileTypeEnum.LOAD:
+                        loadTiles.Add(MapInfo.MapTiles[i]);
+                        break;
+                    case TileTypeEnum.PLACE:
+                        placeTiles.Add(MapInfo.MapTiles[i]);
+                        break;
+                    case TileTypeEnum.OBSTACLE:
+                        break;
+                    default:
+                        break;
                 }
             }
 
@@ -69,14 +71,20 @@ namespace Module.Battle.Com
 
     public class UnitPathExt 
     {
+        private LevelMapInfo m_mapInfo;
+
         public Tile[] Tiles;
         public UnitDir[] DirLink;
 
         private float m_interval;
         private float m_length;
 
+
+
         public UnitPathExt(UnitPath unitPath, LevelMapInfo levelMapInfo)
         {
+            m_mapInfo = levelMapInfo;
+
             var pointLength = unitPath.Points.Length;
 
             Tiles = new Tile[pointLength];
@@ -112,6 +120,11 @@ namespace Module.Battle.Com
             }
         }
 
+        public Vector3 GetStartPos()
+        {
+            return Tiles[0].CenterWorldPos;
+        }
+
         public Vector2Int GetPointByJourney(float journey)
         {
             if (journey >= Length())
@@ -119,8 +132,7 @@ namespace Module.Battle.Com
                 return Tiles[DirLink.Length - 1].Point;
             }
 
-            int curIndex = (int)(journey / LevelMapInfo.TILE_SIZE);
-
+            int curIndex = (int)((journey + 0.5f) / LevelMapInfo.TILE_SIZE);
             return Tiles[curIndex].Point;
         }
 
@@ -173,16 +185,18 @@ namespace Module.Battle.Com
         }
     }
 
+    [Serializable]
     public class UnitPath
     {
+        public Color Color = Color.white;
         public Vector2Int[] Points;
     }
 
+    [Serializable]
     public class Tile
     {
         public TileTypeEnum Type;
         public Vector2Int Point;
-        [HideInInspector]
         public Vector3 CenterWorldPos;
     }
 

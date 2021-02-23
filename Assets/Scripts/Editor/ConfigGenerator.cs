@@ -111,7 +111,7 @@ namespace Config
         {
             if(fieldCount != excelRowInfos[i].Contexts.Length)
             {
-                Debug.LogError($"配置数据不一致行数为:{i}");
+                Debug.LogError($"配置数据不一致行数为:{i}, fieldCount:{fieldCount}, ContextsLength:{excelRowInfos[i].Contexts.Length}");
                 return;
             }
         }

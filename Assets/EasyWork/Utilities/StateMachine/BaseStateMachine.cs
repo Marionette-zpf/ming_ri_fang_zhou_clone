@@ -21,10 +21,14 @@ namespace EasyWork.Utilities
 
         private T m_primaryState;
 
-        public virtual BaseStateMachine<T> AddState(T state, BaseStateRunner<T> stateRunner)
+        public virtual BaseStateMachine<T> AddState(T state, BaseStateRunner<T> stateRunner, bool overrideState = false)
         {
             if (m_stateMap.ContainsKey(state))
             {
+                if (overrideState)
+                {
+                    m_stateMap[state] = stateRunner;
+                }
                 return this;
             }
 

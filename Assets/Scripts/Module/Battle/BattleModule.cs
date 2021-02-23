@@ -20,6 +20,15 @@ namespace Module.Battle
         private LevelMapInfo m_mapInfo;
         private Dictionary<Vector2Int, List<BaseUnit>> m_unitMap = new Dictionary<Vector2Int, List<BaseUnit>>();
 
+        public void InitUnitMap(LevelMapInfo levelMapInfo)
+        {
+            m_unitMap.Clear();
+            foreach (var tile in levelMapInfo.MapTiles)
+            {
+                m_unitMap.Add(tile.Point, new List<BaseUnit>());
+            }
+        }
+
         protected override void OnInit()
         {
             Register(GameKey.DATA_LEVEL_MAP, () => m_mapInfo);
@@ -29,12 +38,7 @@ namespace Module.Battle
 
         public List<BaseUnit> GetUnitsByPoint(Vector2Int point)
         {
-            if(m_unitMap.TryGetValue(point, out var units))
-            {
-                return units;
-            }
-
-            return null;
+            return m_unitMap[point];
         }
 
         private void UnitMoveHandle(UnitMoveEvent obj)
@@ -43,13 +47,8 @@ namespace Module.Battle
             {
                 return;
             }
-
             units.Remove(obj.Unit);
-
-            if(!m_unitMap.TryGetValue(obj.CurrentPoint, out units))
-            {
-                units.Add(obj.Unit);
-            }
+            m_unitMap[obj.CurrentPoint].Add(obj.Unit);
         }
     }
 }

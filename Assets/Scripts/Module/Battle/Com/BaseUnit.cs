@@ -37,6 +37,7 @@ namespace Module.Battle.Com
             }
         }
 
+        public virtual bool IsEnemy => false;
 
         protected BaseUnitStateMachine<UnitStateEnum> m_stateMachine;
         protected BaseAnimatorCom m_animatorCom;
@@ -56,8 +57,9 @@ namespace Module.Battle.Com
         protected virtual void Awake()
         {
             m_stateMachine = new BaseUnitStateMachine<UnitStateEnum>();
-            m_bodyCollider = transform.Find("BodyObj").GetComponent<Collider2D>();
-            m_reactionCollider = transform.Find("ReactionObj").GetComponent<Collider2D>();
+            //m_bodyCollider = transform.Find("BodyObj").GetComponent<Collider2D>();
+            //m_reactionCollider = transform.Find("ReactionObj").GetComponent<Collider2D>();
+            m_animatorCom = transform.GetComponent<BaseAnimatorCom>();
 
             m_stateMachine.DataInterface.Register(KEY_HEALTH, () => m_health);
             m_stateMachine.DataInterface.Register(KEY_BODY_COLLIDER, () => m_bodyCollider);
@@ -66,16 +68,21 @@ namespace Module.Battle.Com
 
             m_stateMachine.DataInterface.Register(KEY_UNIT, () => this);
 
-            m_bodyCollider.OnTriggerEnter2DAsObservable()
-                          .Subscribe(OnBodyTriggerEnterHandle);
+            //m_bodyCollider.OnTriggerEnter2DAsObservable()
+            //              .Subscribe(OnBodyTriggerEnterHandle);
 
-            m_bodyCollider.OnTriggerExit2DAsObservable()
-                          .Subscribe(OnBodyTriggerExitHandle);
+            //m_bodyCollider.OnTriggerExit2DAsObservable()
+            //              .Subscribe(OnBodyTriggerExitHandle);
 
-            m_attackCD.SetCount(1 / m_attackRate.Current);
+            //m_attackCD.SetCount(1 / m_attackRate.Current);
+
+
         }
 
-        
+        protected virtual void Update()
+        {
+            m_stateMachine.UpdateStateMachine();
+        }
 
         public virtual void SetAttackRange(Vector2Int[] attackPoints)
         {
@@ -122,22 +129,27 @@ namespace Module.Battle.Com
         {
             while (true)
             {
-                if (!m_attackCD.IsComplete) yield return null;
-                if (!AttackState) yield return null;
-
-                var attackRange = m_attackRange[CurrentDir];
-
-                for (int i = 0; i < attackRange.Length; i++)
+                if (m_attackCD.IsComplete && AttackState)
                 {
-                    var point = attackRange[i];
-                    var tile = m_mapInfoExt.MapInfo.GetTile(point);
+                    var attackRange = m_attackRange[CurrentDir];
 
-                    if(TargetAttackTileType != tile.Type)
+                    for (int i = 0; i < attackRange.Length; i++)
                     {
-                        continue;
-                    }
+                        var point = attackRange[i] + m_currPoint;
+                        var tile = m_mapInfoExt.MapInfo.GetTile(point);
 
-                    OnAttack(this.Module().GetUnitsByPoint(point));
+                        if (TargetAttackTileType != tile.Type)
+                        {
+                            continue;
+                        }
+                        var uints = this.Module().GetUnitsByPoint(point);
+
+                        if (uints.Count != 0)
+                        {
+                            OnAttack(uints);
+                        }
+
+                    }
                 }
 
                 yield return null;
@@ -161,50 +173,8 @@ namespace Module.Battle.Com
 
     }
 
-    public class BaseCharacterUnit : BaseUnit
-    {
-        public const string KEY_POWER = "Power";
-
-        protected NumberCom m_power;
-    }
 
 
-    public class BaseEnemyUnit : BaseUnit
-    {
-        public const string KEY_PATH = "PathInfo";
-        public const string KEY_SPEED = "MoveSpeed";
-        public const string KEY_AROUNT_CHAR = "AroundChar";
-
-        public const float MINI_DIS = 0.1f;
-
-        protected NumberCom m_speed;
-        protected UnitPathExt m_path;
-
-        protected List<BaseCharacterUnit> m_aroundChar = new List<BaseCharacterUnit>();
-
-
-        protected override void Awake()
-        {
-            base.Awake();
-
-            m_stateMachine.DataInterface.Register(KEY_PATH, () => m_path);
-            m_stateMachine.DataInterface.Register(KEY_SPEED, () => m_speed);
-            m_stateMachine.DataInterface.Register(KEY_AROUNT_CHAR, () => m_aroundChar);
-
-            m_stateMachine.AddState(UnitStateEnum.MOVE, new BaseMoveStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.ATTACK, new BaseAttackStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.DEAD, new BaseDeadStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.HURT, new BaseHurtRunner(m_stateMachine))
-                          .SetPrimaryState(UnitStateEnum.MOVE);
-        }
-
-
-        public void SetPath(UnitPathExt pathInfo)
-        {
-            m_path = pathInfo;
-        }
-
-    }
 
     public class BaseUnitStateMachine<T> : BaseStateMachine<T>
     {
@@ -318,7 +288,7 @@ namespace Module.Battle.Com
 
         protected override void OnEnterState()
         {
-            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Move");
+            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Move_Up");
             GetData<CountDownCom>(BaseUnit.KEY_ATTACK_CD).ReStart();
         }
     }
@@ -347,7 +317,7 @@ namespace Module.Battle.Com
         }
     }
 
-    public abstract class BaseAnimatorCom
+    public abstract class BaseAnimatorCom : MonoBehaviour
     {
         public abstract void SetAnimation(string animation);
 
@@ -358,8 +328,8 @@ namespace Module.Battle.Com
     {
         public Action<float> OnChange;
 
-        private float m_max;
-        private float m_min;
+        private float m_max = float.MaxValue;
+        private float m_min = float.MinValue;
         private float m_curValue;
 
         public float Current
@@ -453,11 +423,11 @@ namespace Module.Battle.Com
                 case UnitDir.EAST:
                     return origin;
                 case UnitDir.WEST:
-                    return new Vector2Int(-origin.x, origin.y);
+                    return new Vector2Int(origin.x, -origin.y);
                 case UnitDir.SOUTH:
-                    return new Vector2Int(origin.y, -origin.x);
-                case UnitDir.NORTH:
                     return new Vector2Int(-origin.y, origin.x);
+                case UnitDir.NORTH:
+                    return new Vector2Int(origin.y, -origin.x);
                 default:
                     break;
             }
@@ -466,14 +436,5 @@ namespace Module.Battle.Com
         }
     }
 
-    public class BasePassivityUnit : BaseEnemyUnit
-    {
-        protected BaseUnit m_battleUnit;
 
-        public void SetBattleUnit(BaseUnit unit)
-        {
-            m_battleUnit = unit;
-            m_stateMachine.EnterState(UnitStateEnum.BATTLE);
-        }
-    }
 }
