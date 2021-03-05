@@ -96,6 +96,11 @@ namespace Helper
             value = uint.Parse(RowValue.Contexts[index]);
         }
 
+        public void ReadFloat(int index, out float value)
+        {
+            value = float.Parse(RowValue.Contexts[index]);
+        }
+
         public void ReadInt(int index, out int value)
         {
             value = int.Parse(RowValue.Contexts[index]);
@@ -125,6 +130,24 @@ namespace Helper
             for (int i = 0; i < value.Length; i++)
             {
                 value[i] = uint.Parse(intArrayStr[index]);
+            }
+        }
+
+        public void ReadIntArray2(int index, out int[][] value, char split = '|', char split2 = '*')
+        {
+            var strArray = RowValue.Contexts[index].Split(split);
+
+            value = new int[strArray.Length][];
+
+            for (int i = 0; i < strArray.Length; i++)
+            {
+                var strArray2 = strArray[i].Split(split2);
+                value[i] = new int[strArray2.Length];
+
+                for (int j = 0; j < strArray2.Length; j++)
+                {
+                    value[i][j] = int.Parse(strArray2[j]);
+                }
             }
         }
     }

@@ -27,6 +27,12 @@ namespace EasyWork.Extend.Utilities
             }
         }
 
+
+        public static bool ExistPool<T>()
+        {
+            return !ESingleton<EPool<T>>.Empty;
+        }
+
         public static IEPool<T> GetPool<T>()
         {
             if (ESingleton<EPool<T>>.Empty)

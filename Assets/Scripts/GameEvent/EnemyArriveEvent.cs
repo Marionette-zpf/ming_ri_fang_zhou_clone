@@ -1,4 +1,5 @@
 ﻿using Module.Battle.Com;
+using Module.Battle.Views;
 using UnityEngine;
 
 namespace GameEvent
@@ -18,5 +19,16 @@ namespace GameEvent
         public Vector2Int PrePoint;
         public Vector2Int CurrentPoint;
         public BaseUnit Unit;
+    }
+
+    public struct UnitLayoutEvent
+    {
+        public GameObject FrontUnitObj;
+        public GameObject BackUnitObj;
+    }
+
+    public struct UnitLayoutComplete
+    {
+        
     }
 }

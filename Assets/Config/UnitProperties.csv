@@ -1,0 +1,5 @@
+绑定键值,攻击范围,攻击速率,生命值,攻击力,攻击速率成长,生命值成长,攻击力成长,移动速度
+uint,int[][],float,float,float,float,float,float,float
+Id,Range,Rate,Health,Attack,RateGrow,HealthGrow,AttackGrow,Speed
+0,0*0|0*1|0*2|1*0|1*1|1*2|-1*0|-1*1|-1*2,0.5,100,20,0.01,10,2,1
+1,0*0|0*1,0.5,100,20,0.01,10,2,1

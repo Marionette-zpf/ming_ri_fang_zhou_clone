@@ -8,6 +8,24 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+public class AAA
+{
+    public BBB bBB = new BBB();
+
+    public BBB AMethod()
+    {
+        return bBB;
+    }
+}
+
+public class BBB
+{
+    public void BMethod(Action action)
+    {
+
+    }
+}
+
 public class GameEntrance : MonoBehaviour
 {
     public Button button;
@@ -15,6 +33,12 @@ public class GameEntrance : MonoBehaviour
 
     private void Awake()
     {
+
+        AAA aAA = null;
+        aAA?.bBB.BMethod(()=> { });
+
+        var b = aAA?.bBB as object;
+
         button.onClick.AddListener(() =>
         {
             ESceneManager.LoadSceneAsync("Story");

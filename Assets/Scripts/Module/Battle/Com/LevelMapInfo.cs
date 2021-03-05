@@ -14,6 +14,9 @@ namespace Module.Battle.Com
     {
         public const float TILE_SIZE = 1;
 
+        public Vector3 XAix = Vector3.right;
+        public Vector3 ZAix = Vector3.forward;
+
         public int Wdith;
         public int Height;
 
@@ -39,8 +42,6 @@ namespace Module.Battle.Com
             MapInfo = mapInfo;
             Classify();
         }
-
-
 
         private void Classify()
         {
@@ -79,8 +80,6 @@ namespace Module.Battle.Com
         private float m_interval;
         private float m_length;
 
-
-
         public UnitPathExt(UnitPath unitPath, LevelMapInfo levelMapInfo)
         {
             m_mapInfo = levelMapInfo;
@@ -101,16 +100,16 @@ namespace Module.Battle.Com
 
                     if(nextPoint.x > point.x)
                     {
-                        DirLink[i] = UnitDir.EAST;
+                        DirLink[i] = UnitDir.NORTH;
                     }else if(nextPoint.x < point.x)
                     {
-                        DirLink[i] = UnitDir.WEST;
+                        DirLink[i] = UnitDir.SOUTH;
                     }else if (nextPoint.y > point.y)
                     {
-                        DirLink[i] = UnitDir.NORTH;
+                        DirLink[i] = UnitDir.WEST;
                     }else if(nextPoint.y < point.y)
                     {
-                        DirLink[i] = UnitDir.SOUTH;
+                        DirLink[i] = UnitDir.EAST;
                     }
                 }
                 else

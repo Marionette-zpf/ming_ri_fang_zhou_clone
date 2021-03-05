@@ -1,0 +1,5 @@
+绑定键值,绑定路径,属性Id
+int,string,uint
+Key,ResUrl,PropertiesKey
+0,prefab_enemy_enemy_001,1
+1,prefab_enemy_enemy_001,1

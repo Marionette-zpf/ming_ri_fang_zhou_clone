@@ -1,6 +1,4 @@
-﻿using EasyWork.Utilities;
-using Module.Battle.Com;
-using UnityEngine;
+﻿using Module.Battle.Com;
 
 namespace Module.Battle.Char.Enemy_001
 {
@@ -11,40 +9,7 @@ namespace Module.Battle.Char.Enemy_001
     /// </summary>
     public class Enemy_001 : BaseEnemyUnit
     {
-        protected override void Start()
-        {
-            m_speed.Current = 0.5f;
 
-            m_stateMachine.AddState(UnitStateEnum.MOVE, new BaseMoveStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.ATTACK, new BaseAttackStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.DEAD, new BaseDeadStateRunner(m_stateMachine))
-                          .AddState(UnitStateEnum.HURT, new BaseHurtRunner(m_stateMachine))
-                          .SetPrimaryState(UnitStateEnum.MOVE);
-        }
-
-    }
-
-    public class Enemy_001_MoveState : BaseMoveStateRunner
-    {
-        public Enemy_001_MoveState(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine)
-        {
-
-        }
-
-        public override void EnterState()
-        {
-            base.EnterState();
-        }
-
-        public override void ExitState()
-        {
-            base.ExitState();
-        }
-
-        public override void UpdateState()
-        {
-            base.UpdateState();
-        }
     }
 
 }

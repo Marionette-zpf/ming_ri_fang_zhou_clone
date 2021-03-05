@@ -1,13 +1,12 @@
-﻿using EasyWork.Extend.Utilities;
+﻿using Config;
+using EasyWork.Extend.Utilities;
 using EasyWork.Utilities;
-using Extend.Unity;
 using GameEvent;
+using Manager;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UniRx;
-using UniRx.Triggers;
 using UnityEngine;
 
 namespace Module.Battle.Com
@@ -19,15 +18,28 @@ namespace Module.Battle.Com
     /// </summary>
     public abstract class BaseUnit : MonoBehaviour, IModuleBinder<BattleModule>
     {
-        public const string KEY_HEALTH = "Health";
-        public const string KEY_BODY_COLLIDER = "BodyCollider";
-        public const string KEY_ANIMATOR = "AnimatorCom";
-        public const string KEY_UNIT = "BaseUnit";
-        public const string KEY_ATTACK_CD = "CountDownCom";
+        public const float ZERO_FLOAT = 0f;
 
         public UnitStateEnum CurrentState => m_stateMachine.CurrentState;
-        public UnitDir CurrentDir { get; set; }
-        public Vector2Int CurrentPoint {
+        public UnitDir CurrentDir
+        {
+            get
+            {
+                return m_currentDir;
+            }
+            set
+            {
+                if(m_currentDir == value)
+                {
+                    return;
+                }
+                OnChangeDirHandle(m_currentDir, value);
+                m_currentDir = value;
+            }
+        }
+
+        public Vector2Int CurrentPoint 
+        {
             get => m_currPoint;
             set
             {
@@ -37,51 +49,73 @@ namespace Module.Battle.Com
             }
         }
 
-        public virtual bool IsEnemy => false;
+        public virtual bool IsEnemy => true;
+        protected virtual bool m_targetUnitIsEnemy => true;
 
-        protected BaseUnitStateMachine<UnitStateEnum> m_stateMachine;
-        protected BaseAnimatorCom m_animatorCom;
+        protected BaseStateMachine<UnitStateEnum> m_stateMachine;
+        protected AnimatorCom m_animatorCom;
         protected Collider2D m_bodyCollider;
         protected Collider2D m_reactionCollider;
         protected LevelMapInfoExt m_mapInfoExt;
         protected Vector2Int m_currPoint;
+        protected UnitDir m_currentDir = UnitDir.NONE;
 
-        protected NumberCom m_health = new NumberCom();
-        protected NumberCom m_attackRate = new NumberCom();
+        protected NumberCom m_health;
+        protected NumberCom m_attackRate;
+        protected NumberCom m_attack;
 
         protected CountDownCom m_attackCD = new CountDownCom();
 
-        protected Dictionary<UnitDir, Vector2Int[]> m_attackRange = new Dictionary<UnitDir, Vector2Int[]>();
+        protected Dictionary<UnitDir, HashSet<Vector2Int>> m_attackRange = new Dictionary<UnitDir, HashSet<Vector2Int>>();
 
+        private List<BaseUnit> m_inAttackRangeTargets = new List<BaseUnit>();
 
         protected virtual void Awake()
         {
-            m_stateMachine = new BaseUnitStateMachine<UnitStateEnum>();
-            //m_bodyCollider = transform.Find("BodyObj").GetComponent<Collider2D>();
-            //m_reactionCollider = transform.Find("ReactionObj").GetComponent<Collider2D>();
-            m_animatorCom = transform.GetComponent<BaseAnimatorCom>();
+            m_stateMachine = new BaseStateMachine<UnitStateEnum>();
+            m_animatorCom = transform.GetComponent<AnimatorCom>();
 
-            m_stateMachine.DataInterface.Register(KEY_HEALTH, () => m_health);
-            m_stateMachine.DataInterface.Register(KEY_BODY_COLLIDER, () => m_bodyCollider);
-            m_stateMachine.DataInterface.Register(KEY_ANIMATOR, () => m_animatorCom);
-            m_stateMachine.DataInterface.Register(KEY_ATTACK_CD, () => m_attackCD);
-
-            m_stateMachine.DataInterface.Register(KEY_UNIT, () => this);
-
-            //m_bodyCollider.OnTriggerEnter2DAsObservable()
-            //              .Subscribe(OnBodyTriggerEnterHandle);
-
-            //m_bodyCollider.OnTriggerExit2DAsObservable()
-            //              .Subscribe(OnBodyTriggerExitHandle);
-
-            //m_attackCD.SetCount(1 / m_attackRate.Current);
-
-
+            m_mapInfoExt = LevelDataManager.DataMgr.MapInfoExt;
         }
+
+        protected virtual void Start()
+        {
+            m_animatorCom.SkeletonAnimation.state.Start += AnimationStateStartHandle;
+            m_animatorCom.SkeletonAnimation.state.Complete += AnimationStateCompleteHandle;
+            m_stateMachine.OnChangeState += StateMachineOnChangeState;
+        }
+
+
 
         protected virtual void Update()
         {
             m_stateMachine.UpdateStateMachine();
+        }
+
+
+        public virtual bool InAttackRange(Vector2Int point)
+        {
+            return m_attackRange[CurrentDir].Contains(point);
+        }
+
+        public virtual void SetProperties(UnitPropertiesConfig propertiesConfig, int level = 0)
+        {
+            m_attackRate = new NumberCom(propertiesConfig.Rate + propertiesConfig.RateGrow * level, ZERO_FLOAT);
+            m_health = new NumberCom(propertiesConfig.Health + propertiesConfig.HealthGrow * level, ZERO_FLOAT);
+            m_attack = new NumberCom(propertiesConfig.Attack + propertiesConfig.AttackGrow * level, ZERO_FLOAT);
+
+            m_attackCD.SetCount(1.0f / m_attackRate.Current);
+
+            var count = propertiesConfig.Range.GetLength(0);
+
+            Vector2Int[] attackPoints = new Vector2Int[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                attackPoints[i] = new Vector2Int(propertiesConfig.Range[i][0], propertiesConfig.Range[i][1]);
+            }
+
+            SetAttackRange(attackPoints);
         }
 
         public virtual void SetAttackRange(Vector2Int[] attackPoints)
@@ -90,16 +124,15 @@ namespace Module.Battle.Com
 
             for (UnitDir dir = UnitDir.EAST; dir <= UnitDir.NORTH; dir++)
             {
-                m_attackRange.Add(dir, new Vector2Int[attackPoints.Length]);
-
+                m_attackRange.Add(dir, new HashSet<Vector2Int>());
                 for (int i = 0; i < attackPoints.Length; i++)
                 {
-                    m_attackRange[dir][i] = dir.GetTrans(attackPoints[i]);
+                    m_attackRange[dir].Add(dir.GetTrans(attackPoints[i]) + m_currPoint);
                 }
             }
         }
 
-        public virtual void DODamage(float damage)
+        public virtual void DoDamage(float damage)
         {
             if(m_stateMachine.CurrentState == UnitStateEnum.DEAD)
             {
@@ -108,229 +141,114 @@ namespace Module.Battle.Com
 
             m_health.Current -= damage;
 
-            if(m_health.Current == 0)
+            if(m_health.Current == ZERO_FLOAT)
             {
                 m_stateMachine.EnterState(UnitStateEnum.DEAD);
                 return;
             }
-
-            if (m_stateMachine.CurrentState == UnitStateEnum.ATTACK || m_stateMachine.CurrentState == UnitStateEnum.HURT)
-            {
-                return;
-            }
-
-            m_stateMachine.EnterState(UnitStateEnum.HURT);
         }
 
-        protected virtual TileTypeEnum TargetAttackTileType => TileTypeEnum.LOAD;
-        protected virtual bool AttackState => CurrentState == UnitStateEnum.MOVE || CurrentState == UnitStateEnum.IDLE;
+        protected Func<BaseUnit, bool> m_searchFilter;
 
-        protected virtual IEnumerator AttackCoroutine()
+        protected List<BaseUnit> SearchTargets(bool isEnemy = true)
         {
-            while (true)
+            if(m_inAttackRangeTargets.Count != 0)
             {
-                if (m_attackCD.IsComplete && AttackState)
+                m_inAttackRangeTargets.Clear();
+            }
+
+            var attackRange = m_attackRange[CurrentDir];
+
+            foreach (var point in attackRange)
+            {
+                var logicPoint = point;
+
+                var uints = this.Module().GetUnitsByPoint(logicPoint);
+
+                for (int j = 0; j < uints.Count; j++)
                 {
-                    var attackRange = m_attackRange[CurrentDir];
+                    var unit = uints[j];
 
-                    for (int i = 0; i < attackRange.Length; i++)
+                    if (unit.IsEnemy == isEnemy)
                     {
-                        var point = attackRange[i] + m_currPoint;
-                        var tile = m_mapInfoExt.MapInfo.GetTile(point);
-
-                        if (TargetAttackTileType != tile.Type)
+                        if(m_searchFilter != null)
                         {
-                            continue;
+                            if(m_searchFilter.Invoke(unit))
+                            {
+                                m_inAttackRangeTargets.Add(unit);
+                            }
                         }
-                        var uints = this.Module().GetUnitsByPoint(point);
-
-                        if (uints.Count != 0)
+                        else
                         {
-                            OnAttack(uints);
+                            m_inAttackRangeTargets.Add(unit);
                         }
-
                     }
                 }
-
-                yield return null;
             }
+
+            return m_inAttackRangeTargets;
         }
 
-        protected virtual void OnAttack(List<BaseUnit> units)
-        {
-
-        }
-
-        protected virtual void OnBodyTriggerEnterHandle(Collider2D other)
-        {
-
-        }
-
-        protected virtual void OnBodyTriggerExitHandle(Collider2D other)
-        {
-
-        }
-
+        protected virtual void Initialize() { }
+        protected virtual void StateMachineOnChangeState(UnitStateEnum pre, UnitStateEnum curr) { }
+        protected virtual void AnimationStateStartHandle(Spine.TrackEntry trackEntry) { }
+        protected virtual void AnimationStateCompleteHandle(Spine.TrackEntry trackEntry) { }
+        protected virtual void OnChangeDirHandle(UnitDir preDir, UnitDir curDir) { }
     }
 
-
-
-
-    public class BaseUnitStateMachine<T> : BaseStateMachine<T>
-    {
-        public event Action<T> OnEnterState;
-
-        public DataInterface DataInterface { get; } = new DataInterface();
-
-        public override void EnterState(T state)
-        {
-            base.EnterState(state);
-            OnEnterState?.Invoke(state);
-        }
-    }
-
-    public abstract class BaseUnitStateRunner<T> : BaseStateRunner<T>
-    {
-        private BaseUnitStateMachine<T> m_unitSM;
-
-        protected BaseUnitStateRunner(BaseStateMachine<T> stateMachine) : base(stateMachine)
-        {
-            m_unitSM = stateMachine as BaseUnitStateMachine<T>;
-        }
-
-        protected void GetData<TData>(string key, out TData data)
-        {
-            m_unitSM.DataInterface.Get(key, out data);
-        }
-
-        protected TData GetData<TData>(string key)
-        {
-           return m_unitSM.DataInterface.Get<TData>(key);
-        }
-    }
-
-    public class BaseHurtRunner : BaseUnitStateRunner<UnitStateEnum>
+    public class BaseIdleStateRunner : BaseStateRunner<UnitStateEnum>
     {
         public override UnitStateEnum State => UnitStateEnum.HURT;
-
-        public BaseHurtRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine) { }
-
-        protected override void OnEnterState()
-        {
-            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Hurt");
-        }
+        public BaseIdleStateRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine) { }
     }
 
-    public class BaseBattleStateRunner : BaseUnitStateRunner<UnitStateEnum>
+    public class BaseBattleStateRunner : BaseStateRunner<UnitStateEnum>
     {
         public override UnitStateEnum State => UnitStateEnum.BATTLE;
 
-        protected CountDownCom m_attackCD;
-
         public BaseBattleStateRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine)
         {
-            m_attackCD = GetData<CountDownCom>(BaseUnit.KEY_ATTACK_CD);
-        }
 
-        protected override void OnEnterState()
-        {
-            m_attackCD.ReStart();
-        }
-
-        public override void UpdateState()
-        {
-            if (m_attackCD.IsComplete)
-            {
-                GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Hurt");
-                m_attackCD.ReStart();
-            }
         }
     }
 
-    public class BaseMoveStateRunner : BaseUnitStateRunner<UnitStateEnum>
+    public class BaseMoveStateRunner : BaseStateRunner<UnitStateEnum>
     {
         public override UnitStateEnum State => UnitStateEnum.MOVE;
 
-        protected UnitPathExt m_path;
-        protected BaseUnit m_unitObj;
-        protected NumberCom m_speed;
-        protected Transform m_trans;
-
-        protected Vector3 m_preDir = Vector3.zero;
-
-        protected int m_targetPointIndex = 0;
-
-        protected float m_curJourney = 0;
-
         public BaseMoveStateRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine) 
         {
-            m_path = GetData<UnitPathExt>(BaseEnemyUnit.KEY_PATH);
-            m_speed = GetData<NumberCom>(BaseEnemyUnit.KEY_SPEED);
-            m_unitObj = GetData<BaseUnit>(BaseUnit.KEY_UNIT);
-
-            m_trans = m_unitObj.transform;
         }
 
-        protected override void OnUpdateState()
-        {
-            if(m_curJourney > m_path.Length())
-            {
-                EEventUtil.Dispatch(new EnemyArriveEvent() { EnemyUnit = m_unitObj as BaseEnemyUnit });
-                return;
-            }
-
-            var moveSize = m_speed.Current * Time.deltaTime;
-            m_curJourney += moveSize;
-            m_trans.position = m_path.GetWSPosByJourney(m_curJourney);
-
-            m_unitObj.CurrentPoint = m_path.GetPointByJourney(m_curJourney);
-        }
-
-        protected override void OnEnterState()
-        {
-            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Move_Up");
-            GetData<CountDownCom>(BaseUnit.KEY_ATTACK_CD).ReStart();
-        }
     }
 
-    public class BaseAttackStateRunner : BaseUnitStateRunner<UnitStateEnum>
-    {
-        public override UnitStateEnum State => UnitStateEnum.ATTACK;
-
-        public BaseAttackStateRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine) { }
-
-        protected override void OnEnterState()
-        {
-            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Attack");
-        }
-    }
-
-    public class BaseDeadStateRunner : BaseUnitStateRunner<UnitStateEnum>
+    public class BaseDeadStateRunner : BaseStateRunner<UnitStateEnum>
     {
         public override UnitStateEnum State => UnitStateEnum.DEAD;
 
         public BaseDeadStateRunner(BaseStateMachine<UnitStateEnum> stateMachine) : base(stateMachine) { }
-
-        protected override void OnEnterState()
-        {
-            GetData<BaseAnimatorCom>(BaseUnit.KEY_ANIMATOR).SetAnimation("Dead");
-        }
-    }
-
-    public abstract class BaseAnimatorCom : MonoBehaviour
-    {
-        public abstract void SetAnimation(string animation);
-
-        public abstract void RegisterEvent(string eventName, Action call);
     }
 
     public class NumberCom
     {
         public Action<float> OnChange;
 
-        private float m_max = float.MaxValue;
-        private float m_min = float.MinValue;
+        private float m_max;
+        private float m_min;
         private float m_curValue;
+
+        public NumberCom()
+        {
+            m_min = float.MinValue;
+            m_max = float.MaxValue;
+        }
+        public NumberCom(float current, float min = float.MinValue, float max = float.MaxValue)
+        {
+            m_min = min;
+            m_max = max;
+
+            m_curValue = current;
+        }
 
         public float Current
         {
@@ -360,6 +278,7 @@ namespace Module.Battle.Com
     public class CountDownCom
     {
         public bool IsComplete => m_current <= 0;
+        public float Percent => m_current / m_count;
 
         private float m_count;
         private float m_current;
@@ -381,6 +300,11 @@ namespace Module.Battle.Com
                                      .TakeWhile(_ => m_current > 0)
                                      .DoOnCompleted(()=> complete?.Invoke())
                                      .Subscribe(_ => m_current -= Time.deltaTime);
+        }
+
+        public void Complete()
+        {
+            m_current = 0;
         }
     }
 
@@ -411,7 +335,8 @@ namespace Module.Battle.Com
         /// <summary>
         /// 北
         /// </summary>
-        NORTH
+        NORTH,
+        NONE
     }
 
     public static class UnitDirCalExt

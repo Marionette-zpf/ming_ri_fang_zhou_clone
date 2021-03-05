@@ -149,7 +149,7 @@ namespace Config
     {
         { "int", "Int" }, {"uint", "Uint"}, {"string", "String"}, {"int[]", "IntArray"},
         { "uint[]", "UintArray" }, { "string[]", "StringArray"}, {"int[][]", "IntArray2"},
-        { "uint[][]", "UintArray2"}
+        { "uint[][]", "UintArray2"}, { "float", "Float"}
     };
 
 }
@@ -185,6 +185,11 @@ public class ConfigTableReader
     public void ReadUint(int index, out uint value)
     {
         value = uint.Parse(RowValue.Contexts[index]);
+    }
+
+    public void ReadFloat(int index, out float value)
+    {
+        value = float.Parse(RowValue.Contexts[index]);
     }
 
     public void ReadInt(int index, out int value)

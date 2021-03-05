@@ -11,15 +11,16 @@ namespace EasyWork.Utilities
     /// </summary>
     public class BaseStateMachine<T>
     {
+        /// <summary>
+        /// param1:原先状态 param2:改变状态
+        /// </summary>
+        public event Action<T, T> OnChangeState;
+
         public T CurrentState => m_curStateRunner.State;
 
         private Dictionary<T, BaseStateRunner<T>> m_stateMap = new Dictionary<T, BaseStateRunner<T>>();
 
-        private IComparable<T> comparable;
-
         private BaseStateRunner<T> m_curStateRunner;
-
-        private T m_primaryState;
 
         public virtual BaseStateMachine<T> AddState(T state, BaseStateRunner<T> stateRunner, bool overrideState = false)
         {
@@ -31,7 +32,6 @@ namespace EasyWork.Utilities
                 }
                 return this;
             }
-
             m_stateMap.Add(state, stateRunner);
             return this;
         }
@@ -40,22 +40,24 @@ namespace EasyWork.Utilities
         {
             if(!m_stateMap.TryGetValue(primaryState, out var stateRunner))
             {
-                Debug.LogError("");
+                Debug.LogError($"primaryState:{primaryState} not exit");
                 return;
             }
 
-            m_primaryState = primaryState;
             m_curStateRunner = stateRunner;
-
             m_curStateRunner.EnterState();
         }
 
         public virtual void EnterState(T state)
         {
-            if (m_stateMap.TryGetValue(state, out var stateRunner) && stateRunner == m_curStateRunner)
+            if (!m_stateMap.TryGetValue(state, out var stateRunner) || stateRunner == m_curStateRunner)
             {
+                Debug.LogError($"curState:{m_curStateRunner}, enterState:{state}");
                 return;
             }
+
+            OnChangeState?.Invoke(CurrentState, state);
+
             m_curStateRunner.ExitState();
             m_curStateRunner = stateRunner;
             m_curStateRunner.EnterState();
@@ -63,12 +65,34 @@ namespace EasyWork.Utilities
 
         public virtual void UpdateStateMachine()
         {
-            m_curStateRunner.UpdateState();
+            m_curStateRunner?.UpdateState();
+        }
+
+        public virtual void RegisterStateRunner(T state, Action action)
+        {
+            if (!m_stateMap.TryGetValue(state, out var stateRunner))
+            {
+                return;
+            }
+
+            stateRunner.OnUpdate += action;
+        }
+
+        public virtual void UnregisterStateRunner(T state, Action action)
+        {
+            if (!m_stateMap.TryGetValue(state, out var stateRunner))
+            {
+                return;
+            }
+
+            stateRunner.OnUpdate -= action;
         }
     }
 
     public abstract class BaseStateRunner<T> 
     {
+        public event Action OnUpdate;
+
         public abstract T State { get; }
 
         private BaseStateMachine<T> m_stateMachine;
@@ -92,6 +116,7 @@ namespace EasyWork.Utilities
         public virtual void UpdateState()
         {
             OnUpdateState();
+            OnUpdate?.Invoke();
         }
 
         protected virtual void OnEnterState() { }

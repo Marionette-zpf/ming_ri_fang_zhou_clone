@@ -18,7 +18,7 @@ namespace Module.Battle.Com
     {
         public override void Excute(BaseUnit source, BaseUnit target, float value)
         {
-            target.DODamage(value);
+            target.DoDamage(value);
         }
     }
 }

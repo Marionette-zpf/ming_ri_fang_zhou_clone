@@ -1,4 +1,5 @@
 ﻿using Module.Battle.Com;
+using Spine;
 using Spine.Unity;
 using System;
 using UnityEngine;
@@ -10,9 +11,9 @@ namespace Module
     /// Name    DESKTOP-H2JU0TM\icon
     /// Desc    desc
     /// </summary>
-    public class AnimatorCom : BaseAnimatorCom
+    public class AnimatorCom : MonoBehaviour
     {
-        private SkeletonAnimation SkeletonAnimation
+        public SkeletonAnimation SkeletonAnimation
         {
             get
             {
@@ -20,22 +21,41 @@ namespace Module
                 {
                     m_skeletonAnimation = GetComponentInChildren<SkeletonAnimation>();
                 }
-
                 return m_skeletonAnimation;
             }
         }
 
+
         private SkeletonAnimation m_skeletonAnimation;
 
-        public override void RegisterEvent(string eventName, Action call)
-        {
 
+        public void SetAnimation(string animation, bool loop = true)
+        {
+            SkeletonAnimation.state.SetAnimation(0, animation, loop);
         }
 
-        public override void SetAnimation(string animation)
+
+        public string GetCurAnimationName()
         {
-            SkeletonAnimation.state.SetAnimation(0, animation, true);
+            return SkeletonAnimation.AnimationName;
         }
 
+        public void SetAnimation(string animation, params string[] appendAnimations)
+        {
+            SkeletonAnimation.state.SetAnimation(0, animation, false);
+            for (int i = 0; i < appendAnimations.Length; i++)
+            {
+                SkeletonAnimation.state.AddAnimation(0, appendAnimations[i], false, 0);
+            }
+        }
+
+        public void SetAnimationAndLoopOnEnd(string animation, params string[] appendAnimations)
+        {
+            SkeletonAnimation.state.SetAnimation(0, animation, false);
+            for (int i = 0; i < appendAnimations.Length; i++)
+            {
+                SkeletonAnimation.state.AddAnimation(0, appendAnimations[i], i == appendAnimations.Length - 1, 0);
+            }
+        }
     }
 }

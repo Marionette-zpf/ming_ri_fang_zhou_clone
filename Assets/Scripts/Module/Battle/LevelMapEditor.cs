@@ -20,12 +20,14 @@ namespace Module.Battle
         public Vector3 XAix = Vector3.right;
         public Vector3 ZAix = Vector3.forward;
 
-        void Start()
-        {
-
-        }
-
         private List<Vector2Int> m_editorPath = new List<Vector2Int>();
+        private List<Vector2Int> m_attackRange = new List<Vector2Int>();
+
+        public void GenerateMesh()
+        {
+            Mesh mesh = new Mesh();
+            List<Vector3> vertices = new List<Vector3>();
+        }
 
         void Update()
         {
