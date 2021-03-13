@@ -108,7 +108,13 @@ namespace Module.Battle
 
             if (Input.GetMouseButtonDown(0))
             {
-                m_unit.GetComponent<BaseCharacterUnit>().Initialize(m_selectPoint, unitDir);
+                var unitCom = m_unit.GetComponent<BaseCharacterUnit>();
+                unitCom.Initialize(m_selectPoint, unitDir);
+
+                if (unitDir == UnitDir.WEST)
+                {
+                    unitCom.Flip(0);
+                }
                 Clear();
             }
         }

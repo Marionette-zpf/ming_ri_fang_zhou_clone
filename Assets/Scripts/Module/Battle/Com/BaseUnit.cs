@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
+using DG.Tweening;
 
 namespace Module.Battle.Com
 {
@@ -68,12 +70,15 @@ namespace Module.Battle.Com
 
         protected Dictionary<UnitDir, HashSet<Vector2Int>> m_attackRange = new Dictionary<UnitDir, HashSet<Vector2Int>>();
 
+        protected Slider m_bloodUI;
+
         private List<BaseUnit> m_inAttackRangeTargets = new List<BaseUnit>();
 
         protected virtual void Awake()
         {
             m_stateMachine = new BaseStateMachine<UnitStateEnum>();
             m_animatorCom = transform.GetComponent<AnimatorCom>();
+            m_bloodUI = GetComponentInChildren<Slider>();
 
             m_mapInfoExt = LevelDataManager.DataMgr.MapInfoExt;
         }
@@ -92,6 +97,13 @@ namespace Module.Battle.Com
             m_stateMachine.UpdateStateMachine();
         }
 
+
+        private float m_rotateStep = 0;
+
+        public void Flip(float time)
+        {
+            m_animatorCom.SkeletonAnimation.transform.DOLocalRotate(new Vector3(0, m_rotateStep += 180, 0), time);
+        }
 
         public virtual bool InAttackRange(Vector2Int point)
         {
@@ -140,11 +152,16 @@ namespace Module.Battle.Com
             }
 
             m_health.Current -= damage;
+            m_bloodUI.value = m_health.Precent;
 
             if(m_health.Current == ZERO_FLOAT)
             {
                 m_stateMachine.EnterState(UnitStateEnum.DEAD);
                 return;
+            }
+            else
+            {
+                //变红
             }
         }
 
@@ -232,6 +249,8 @@ namespace Module.Battle.Com
     public class NumberCom
     {
         public Action<float> OnChange;
+
+        public float Precent => m_curValue / (m_max - m_min);
 
         private float m_max;
         private float m_min;

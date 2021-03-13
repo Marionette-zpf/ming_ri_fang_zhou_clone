@@ -1,7 +1,6 @@
 ﻿using Config;
 using Module.Battle.Bullet;
 using Module.Battle.Com;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +22,19 @@ namespace Module.Battle.Char.amiya
     {
         protected virtual int m_maxGuardCount => 2;
         protected List<BaseUnit> m_guardUnits = new List<BaseUnit>();
+
+        private bool m_fliped;
+
+        protected override void StateMachineOnChangeState(UnitStateEnum pre, UnitStateEnum curr)
+        {
+            base.StateMachineOnChangeState(pre, curr);
+
+            if(curr == UnitStateEnum.IDLE && m_fliped)
+            {
+                Flip(0.2f);
+                m_fliped = false;
+            }
+        }
 
         protected override void Initialize()
         {
@@ -59,6 +71,15 @@ namespace Module.Battle.Char.amiya
             Guard(targets);
 
             m_attackCD.Complete();
+            if(
+                targets[0].CurrentPoint.x > CurrentPoint.x && CurrentDir == UnitDir.EAST
+                || targets[0].CurrentPoint.x < CurrentPoint.x && CurrentDir == UnitDir.WEST
+                )
+            {
+                Flip(0.2f);
+                m_fliped = true;
+            }
+
             m_stateMachine.EnterState(UnitStateEnum.BATTLE);
         }
 
@@ -93,7 +114,9 @@ namespace Module.Battle.Char.amiya
             {
                 m_guardUnits.Add(targets[i]);
 
-                (targets[i] as BaseEnemyUnit)?.EnterBattle(this);
+                var target = targets[i] as BaseEnemyUnit;
+
+                target?.EnterBattle(this);
             }
         }
     }
